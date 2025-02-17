@@ -9,7 +9,7 @@ For Initial setup for frontend (cd frontent)
 2. npm start
 
 Add .env in backend folder. The required values
-PORT=5000
-MONGO_URI
-JWT_SECRET
-OPENAI_API_KEY
+1. PORT=5000
+2. MONGO_URI
+3. JWT_SECRET
+4. OPENAI_API_KEY
