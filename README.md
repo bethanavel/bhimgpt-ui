@@ -7,3 +7,9 @@ For initial setup for backend (cd backend)
 For Initial setup for frontend (cd frontent)
 1. npm install
 2. npm start
+
+Add .env in backend folder. The required values
+PORT=5000
+MONGO_URI
+JWT_SECRET
+OPENAI_API_KEY
