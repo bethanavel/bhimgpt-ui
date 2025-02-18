@@ -17,7 +17,7 @@ export const Sidebar = styled.div`
 `;
 
 export const NewChatButton = styled.button`
-  background-color: #10a37f;
+  background-color: #2196f3;
   color: white;
   font-size: 16px;
   border: none;
@@ -28,7 +28,7 @@ export const NewChatButton = styled.button`
   transition: 0.3s;
 
   &:hover {
-    background-color: #0e8c6b;
+    background-color: #1976d2;
   }
 `;
 
@@ -77,7 +77,7 @@ export const Message = styled.div`
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
-  background-color: ${({ isbot }) => (isbot === "true" ? "#e0e0e0" : "#10a37f")};
+  background-color: ${({ isbot }) => (isbot === "true" ? "#e0e0e0" : "#2196f3")};
   color: ${({ isbot }) => (isbot === "true" ? "#333" : "#fff")};
 `;
 
@@ -98,7 +98,7 @@ export const Input = styled.input`
 `;
 
 export const SendButton = styled.button`
-  background-color: #10a37f;
+  background-color: #2196f3;
   color: white;
   border: none;
   padding: 10px 24px;
@@ -109,6 +109,6 @@ export const SendButton = styled.button`
   transition: 0.3s;
 
   &:hover {
-    background-color: #0e8c6b;
+    background-color: #1976d2;
   }
 `;

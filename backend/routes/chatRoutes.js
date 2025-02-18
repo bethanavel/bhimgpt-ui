@@ -67,29 +67,36 @@ router.post("/save", async (req, res) => {
     }
 
     if (!selectedChat) {
-      // Create a new chat if chatId is not found or not provided
+      // Create a new chat with both initial messages
       selectedChat = {
         _id: new mongoose.Types.ObjectId(),
-        title: truncateMessage(message, 32), // Use first few words as title
-        messages: [],
+        title: truncateMessage(message, 32),
+        messages: [
+          { role: "human", content: message }
+        ],
         createdAt: new Date(),
       };
+      // Add AI response if it exists
+      if (aiResponse) {
+        selectedChat.messages.push({ role: "ai", content: aiResponse });
+      }
       chat.chats.push(selectedChat);
-    }
-
-    // Push messages to the selected chat
-    // selectedChat.messages.push({ role: "user", content: message });
-    // selectedChat.messages.push({ role: "bot", content: botResponse });
-    let chatIndex = chat.chats.findIndex(c => c._id.toString() === selectedChat._id.toString());
-    
-    if (chatIndex !== -1) {
-      chat.chats[chatIndex].messages.push({ role: "human", content: message });
-      chat.chats[chatIndex].messages.push({ role: "ai", content: aiResponse });
+    } else {
+      // For existing chats
+      const chatIndex = chat.chats.findIndex(c => c._id.toString() === chatId);
+      if (chatIndex !== -1) {
+        // Add both messages together
+        chat.chats[chatIndex].messages.push({ role: "human", content: message });
+        if (aiResponse) {
+          chat.chats[chatIndex].messages.push({ role: "ai", content: aiResponse });
+        }
+      }
     }
 
     await chat.save();
     res.json({ success: true, chat, chatId: selectedChat._id });
   } catch (err) {
+    console.error("Error saving chat:", err);
     res.status(500).json({ error: "Failed to save chat" });
   }
 });

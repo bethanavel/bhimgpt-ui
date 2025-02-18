@@ -20,31 +20,41 @@ const Chat = () => {
   const fetchChatResponse = async (question, chatHistory) => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/chat/chatResponse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, chat_history: chatHistory })
+      // Format chat history to match Flask server expectations
+      const formattedHistory = chatHistory.map(msg => ({
+        type: msg.role,  // 'human' or 'ai'
+        content: msg.content
+      }));
+      // Call Flask server using axios
+      const response = await axios.post("http://localhost:5001/chat", {
+        question,
+        chat_history: formattedHistory
       });
-      const data = await response.json();
+
+      // const response = await fetch("http://localhost:5000/api/chat/chatResponse", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ question, chat_history: chatHistory })
+      // });
+      // const data = await response.json();
       setLoading(false);
-      return data;
+    //   return data;
+    // } catch (error) {
+    //   console.error("Error fetching response:", error);
+    //   setLoading(false);
+    //   return { error: "Server error" };
+    // }
+    const { answer, sources } = response.data;
+      if (answer) {
+        return { answer, sources: sources || [] };
+      } else {
+        console.error("Unexpected response format:", response.data);
+        return { error: "Unexpected response format" };
+      }
     } catch (error) {
       console.error("Error fetching response:", error);
       setLoading(false);
-      return { error: "Server error" };
-    }
-  };
-
-  // Save Chat Message
-  const saveMessage = async (userMessage, aiMessage) => {
-    try {
-      await axios.post("http://localhost:5000/api/chat/save", {
-        userId: user._id,
-        message: userMessage,
-        aiResponse: aiMessage,
-      });
-    } catch (error) {
-      console.error("Error saving message:", error);
+      return { error: error.message || "Server error" };
     }
   };
 
@@ -82,19 +92,37 @@ const Chat = () => {
     if (!input.trim()) return;
 
     const userMessage = { role: "human", content: input };
-    setMessages(prevMessages => [...prevMessages, userMessage]); // Show user's message instantly
-    setInput(""); // Clear input field
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setInput("");
 
-    // Fetch AI Response
+    // Fetch AI Response first
     const response = await fetchChatResponse(input, messages);
-    if (response.error) return; // Stop if there's an error
+    if (response.error) return;
 
-    const aiMessage = { role: "ai", content: response.answer };
-    setMessages(prevMessages => [...prevMessages, aiMessage]); // Show AI response
+    const aiMessage = { 
+      role: "ai", 
+      content: response.answer,
+      sources: response.sources
+    };
+    setMessages(prevMessages => [...prevMessages, aiMessage]);
 
-    // Save Messages after AI responds
-    await saveMessage(userMessage.content, aiMessage.content);
-    fetchChats();
+    // Save both messages together
+    try {
+      const saveResponse = await axios.post("http://localhost:5000/api/chat/save", {
+        userId: user._id,
+        chatId: selectedChatId,
+        message: userMessage.content,
+        aiResponse: aiMessage.content
+      });
+
+      // Only set selectedChatId if this is a new conversation
+      if (!selectedChatId) {
+        setSelectedChatId(saveResponse.data.chatId);
+        fetchChats(); // Only fetch chats when creating a new conversation
+      }
+    } catch (error) {
+      console.error("Error saving messages:", error);
+    }
   };
 
   const startNewChat = () => {
