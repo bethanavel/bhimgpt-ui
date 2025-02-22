@@ -2,6 +2,7 @@ const express = require("express");
 const Chat = require("../models/Chat");
 const mongoose = require("mongoose");
 const { ChatOpenAI } = require('@langchain/openai');
+const axios = require('axios');
 const router = express.Router();
 
 const truncateMessage = (message, maxLength) => {
@@ -30,18 +31,16 @@ router.post('/chatResponse', async (req, res) => {
     const { question, chat_history = [] } = req.body;
     if (!question) return res.status(400).json({ error: 'Question is required' });
 
-    const response = await llm.invoke([
-      { role: "system", content: "Answer the user's query directly." },
-      { role: "user", content: question }
-    ]);
+    const response = await axios.post('https://e372-103-176-188-207.ngrok-free.app/chat', {
+      question,
+      chat_history
+    });
 
     // Prepare Response
     res.json({
-      answer: response.content,
-      chat_history: [...chat_history, 
-        { type: "human", content: question }, 
-        { type: "ai", content: response.content }
-      ]
+      answer: response.data.answer,
+      chat_history: [...chat_history, response.data.chat_history],
+      sources: response.data.sources
     });
 
   } catch (error) {
@@ -52,7 +51,7 @@ router.post('/chatResponse', async (req, res) => {
 
 // Save chat message
 router.post("/save", async (req, res) => {
-  const { userId, chatId, message, aiResponse } = req.body;
+  const { userId, chatId, message, aiResponse, sources } = req.body;
 
   try {
     let chat = await Chat.findOne({ userId });
@@ -74,11 +73,15 @@ router.post("/save", async (req, res) => {
         messages: [
           { role: "human", content: message }
         ],
-        createdAt: new Date(),
+        createdAt: new Date()
       };
       // Add AI response if it exists
       if (aiResponse) {
-        selectedChat.messages.push({ role: "ai", content: aiResponse });
+        selectedChat.messages.push({ 
+          role: "ai", 
+          content: aiResponse,
+          sources: sources || [] // Save sources with AI message
+        });
       }
       chat.chats.push(selectedChat);
     } else {
@@ -88,7 +91,11 @@ router.post("/save", async (req, res) => {
         // Add both messages together
         chat.chats[chatIndex].messages.push({ role: "human", content: message });
         if (aiResponse) {
-          chat.chats[chatIndex].messages.push({ role: "ai", content: aiResponse });
+          chat.chats[chatIndex].messages.push({ 
+            role: "ai", 
+            content: aiResponse,
+            sources: sources || [] // Save sources with AI message
+          });
         }
       }
     }
@@ -97,7 +104,7 @@ router.post("/save", async (req, res) => {
     res.json({ success: true, chat, chatId: selectedChat._id });
   } catch (err) {
     console.error("Error saving chat:", err);
-    res.status(500).json({ error: "Failed to save chat" });
+    res.status(500).json({ error: err.message || "Failed to save chat" });
   }
 });
 
@@ -128,14 +135,42 @@ router.get("/:userId/:chatId", async (req, res) => {
     }
 
     const chat = await Chat.findOne({ userId });
-
     const selectedChat = chat?.chats.id(chatId);
+    
+    // Return messages with sources
     res.json(selectedChat ? selectedChat.messages : []);
   } catch (err) {
     res.status(500).json({ error: "Failed to retrieve chat messages" });
   }
 });
 
+// Delete a specific chat session
+router.delete("/:userId/:chatId", async (req, res) => {
+  try {
+    const { userId, chatId } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(chatId)) {
+      return res.status(400).json({ error: "Invalid user ID or Chat ID" });
+    }
+
+    // Find the user's chat document
+    const chat = await Chat.findOne({ userId });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found for this user" });
+    }
+
+    // Remove the chat with the given chatId
+    chat.chats = chat.chats.filter(chatItem => chatItem._id.toString() !== chatId);
+
+    // Save the updated chat document
+    await chat.save();
+
+    res.json({ success: true, message: "Chat deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting chat:", err);
+    res.status(500).json({ error: "Failed to delete chat" });
+  }
+});
 
 module.exports = router;
