@@ -83,11 +83,10 @@ export const Message = styled.div`
 
 export const InputContainer = styled.div`
   display: flex;
-  padding: 20px;
+  padding: 20px 0;
   background-color: #fff;
   width: 100%;
   max-width: 800px;
-  margin: 0 auto;
 `;
 
 export const Input = styled.input`

@@ -32,30 +32,13 @@ export const Button = styled.button`
   cursor: pointer;
 `;
 
-export const FooterText = styled.p`
+export const SuccessMessage = styled.p`
   margin-top: 20px;
-  font-size: 14px;
-  color: #ddd;
-  a {
-    color: #10a37f;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  a:hover {
-    text-decoration: underline;
-  }
+  font-size: 18px;
+  color: #10a37f; // Green color for success message
 `;
 
-export const ForgotPasswordText = styled.p`
-  margin-top: 10px;
-  font-size: 14px;
-  color: #ddd;
-  a {
-    color: #10a37f;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  a:hover {
-    text-decoration: underline;
-  }
-`;
+export const TickIcon = styled.span`
+  font-size: 50px; // Size of the tick icon
+  color: #10a37f; // Green color for the tick
+`; 
