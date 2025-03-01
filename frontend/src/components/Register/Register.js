@@ -37,10 +37,12 @@ const Register = () => {
         email,
         password,
       });
-      alert(res.data.message);
-      navigate("/login");
-    } catch (err) {
-      setError(err.response.data.error || "Registration failed!");
+      alert("A verification email has been sent. Please check your inbox.");
+    } catch (errorResponse) {
+      if (errorResponse?.response && errorResponse?.response?.data?.error) {
+        alert(errorResponse?.response?.data?.error);
+      }
+      console.log(errorResponse);
     }
   };
 
@@ -49,9 +51,11 @@ const Register = () => {
       <h2>Register</h2>
       <Form onSubmit={handleRegister}>
         <Input type="email" placeholder="Email" onChange={(e) => {setEmail(e.target.value); setError({...error, email: ""});}} />
+        {error.email && <ErrorMessage>{error.email}</ErrorMessage>}
         <Input type="password" placeholder="Password" onChange={(e) => {setPassword(e.target.value); setError({...error, password: ""});}} />
+        {error.password && <ErrorMessage>{error.password}</ErrorMessage>}
         <Input type="password" placeholder="Confirm Password" onChange={(e) => {setConfirmPassword(e.target.value); setError({...error, confirmPassword: ""});}} />
-        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {error.confirmPassword && <ErrorMessage>{error.confirmPassword}</ErrorMessage>}
         <Button type="submit">Register</Button>
       </Form>
       <FooterText>

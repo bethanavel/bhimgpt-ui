@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Container, Form, Input, Button, SuccessMessage, TickIcon } from "./ResetPassword.styles";
 
 const ResetPassword = () => {
@@ -8,6 +8,7 @@ const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -19,6 +20,7 @@ const ResetPassword = () => {
     try {
       const res = await axios.post(`http://localhost:5000/api/auth/reset-password`, { token, newPassword });
       setSuccess(true);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
       alert(err.response.data.error);
     }
@@ -30,7 +32,7 @@ const ResetPassword = () => {
         <div style={{ textAlign: "center" }}>
           <TickIcon>✔️</TickIcon>
           <SuccessMessage>Your password has been reset successfully!</SuccessMessage>
-          <p>You can now close this page or <Link style={{color: "blue"}} to="/login">log in</Link> to continue.</p>
+          <p>You can now close this page.</p>
         </div>
       ) : (
         <>

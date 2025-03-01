@@ -4,6 +4,7 @@ import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import Chat from "./components/Chat/chat";
 import ResetPassword from "./components/ResetPassword/ResetPassword";
+import VerifyEmail from "./components/VerifyEmail/VerifyEmail";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Chat />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
       </Routes>
     </Router>
   );
