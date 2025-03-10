@@ -3,17 +3,88 @@ import styled from "styled-components";
 export const Container = styled.div`
   display: flex;
   height: 100vh;
-  background-color: #f0f0f0;
+  position: relative;
+
+  @media (max-width: 768px) {
+    flex-direction: column; // Stack elements vertically on smaller screens
+  }
 `;
 
 export const Sidebar = styled.div`
   width: 300px;
   background-color: #ffffff;
-  padding: 20px;
+  padding: 10px 20px;
   border-right: 1px solid #ddd;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s ease;
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: ${props => props.isOpen ? 'translateX(0)' : 'translateX(-100%)'};
+    box-shadow: ${props => props.isOpen ? '0 0 10px rgba(0,0,0,0.2)' : 'none'};
+  }
+`;
+
+export const MenuButton = styled.button`
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1001;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
+export const Overlay = styled.div`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: ${props => props.isOpen ? 'block' : 'none'};
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+`;
+
+export const Title = styled.h2`
+  margin: 0;
+  padding: 12px 20px;
+  text-align: left;
+  color: #5d5d5d;
+  
+  @media (max-width: 768px) {
+    text-align: center;
+  }
+`;
+
+export const ChatContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 `;
 
 export const NewChatButton = styled.button`
@@ -58,6 +129,10 @@ export const ChatBox = styled.div`
   background-color: #fff;
   padding: 1rem 3rem;
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 1rem; // Reduce padding on mobile
+  }
 `;
 
 export const MessagesContainer = styled.div`
@@ -71,7 +146,7 @@ export const MessagesContainer = styled.div`
 export const Message = styled.div`
   width: fit-content;
   max-width: 700px;
-  padding: 12px;
+  padding: 1rem;
   border-radius: 12px;
   margin-bottom: 10px;
   font-size: 14px;
@@ -87,6 +162,10 @@ export const InputContainer = styled.div`
   background-color: #fff;
   width: 100%;
   max-width: 800px;
+
+  @media (max-width: 768px) {
+    padding: 10px 0; // Reduce padding on mobile
+  }
 `;
 
 export const Input = styled.input`
@@ -121,8 +200,8 @@ export const SendButton = styled.button`
 `;
 
 export const SourcesContainer = styled.div`
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 1rem;
+  padding: 12px;
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -132,6 +211,7 @@ export const SourcesTitle = styled.h4`
   font-size: 16px;
   color: #333;
   margin-bottom: 8px;
+  margin-top: 0;
 `;
 
 export const SourcesList = styled.ul`

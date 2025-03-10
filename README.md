@@ -12,4 +12,3 @@ Add .env in backend folder. The required values
 1. PORT=5000
 2. MONGO_URI
 3. JWT_SECRET
-4. OPENAI_API_KEY

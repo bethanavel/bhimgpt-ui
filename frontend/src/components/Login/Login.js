@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Container, Form, Input, Button, FooterText, ForgotPasswordText } from "./Login.styles";
 import { ErrorMessage } from "../Register/Register.styles";
+import config from '../../config'; // Import config
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ const Login = () => {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+      const res = await axios.post(`${config.API_URL}/api/auth/login`, { email, password });
       alert(res.data.message);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -36,7 +37,7 @@ const Login = () => {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
+      const res = await axios.post(`${config.API_URL}/api/auth/forgot-password`, { email });
       alert(res.data.message);
     } catch (err) {
       alert(err.response.data.error);

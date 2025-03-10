@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Container, Form, Input, Button, SuccessMessage, TickIcon } from "../ResetPassword/ResetPassword.styles";
 import { WarningIcon, WarningMessage } from "./VerifyEmail.styles";
 import axios from "axios";
+import config from '../../config';
 
 const VerifyEmail = () => {
   const { token } = useParams();
@@ -13,7 +14,7 @@ const VerifyEmail = () => {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/auth/verify-email?token=${token}`);
+        const res = await axios.get(`${config.API_URL}/api/auth/verify-email?token=${token}`);
         setMessage(res.data.message);
         setSuccess(true);
         setTimeout(() => navigate("/login"), 3000); // Redirect to login after 3 seconds

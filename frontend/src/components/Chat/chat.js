@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import config from '../../config'; // Import config
 import {
   Container, Sidebar, ChatBox, MessagesContainer,
-  Message, InputContainer, Input, SendButton, SidebarItem, NewChatButton, SourcesContainer, SourcesTitle, SourcesList, SourceItem, ThreeDotMenu, DeleteButton
+  Message, InputContainer, Input, SendButton, SidebarItem, NewChatButton, SourcesContainer, SourcesTitle, SourcesList, SourceItem, ThreeDotMenu, DeleteButton,
+  MenuButton, Overlay, Title, ChatContainer
 } from './chat.styles';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -15,8 +17,19 @@ const Chat = () => {
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [loading, setLoading] = useState(false); // Loader state
   const [showDelete, setShowDelete] = useState(null); // State to track which chat's delete button to show
+  const [sidebarOpen, setSidebarOpen] = useState(false); // State for mobile sidebar
   const navigate = useNavigate();
   const deleteButtonRef = useRef(null); // Ref for the delete button
+
+  // Toggle sidebar function for mobile
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Close sidebar when clicking outside
+  const handleOverlayClick = () => {
+    setSidebarOpen(false);
+  };
 
   // Fetch AI Response
   const fetchChatResponse = async (question, chatHistory) => {
@@ -28,25 +41,12 @@ const Chat = () => {
         content: msg.content
       }));
       // Call Flask server using axios
-      const response = await axios.post("http://localhost:5000/api/chat/chatResponse", {
+      const response = await axios.post(`${config.API_URL}/api/chat/chatResponse`, {
         question,
         chat_history: formattedHistory
       });
-
-      // const response = await fetch("http://localhost:5000/api/chat/chatResponse", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ question, chat_history: chatHistory })
-      // });
-      // const data = await response.json();
       setLoading(false);
-    //   return data;
-    // } catch (error) {
-    //   console.error("Error fetching response:", error);
-    //   setLoading(false);
-    //   return { error: "Server error" };
-    // }
-    const { answer, sources } = response.data;
+      const { answer, sources } = response.data;
       if (answer) {
         return { answer, sources: sources || [] };
       } else {
@@ -63,7 +63,7 @@ const Chat = () => {
   const fetchChats = async () => {
     if (!user) return;
     try {
-      const res = await axios.get(`http://localhost:5000/api/chat/${user._id}`);
+      const res = await axios.get(`${config.API_URL}/api/chat/${user._id}`);
       setChats(res.data);
     } catch (error) {
       console.error("Error fetching chats:", error);
@@ -85,7 +85,7 @@ const Chat = () => {
 
   const loadChat = async (chatId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/chat/${user._id}/${chatId}`);
+      const res = await axios.get(`${config.API_URL}/api/chat/${user._id}/${chatId}`);
       setSelectedChatId(chatId);
       setMessages(res.data);
     } catch (error) {
@@ -119,7 +119,7 @@ const Chat = () => {
 
       // If it's a new chat, we need to create it first
       if (!chatIdToSave) {
-        const newChatResponse = await axios.post("http://localhost:5000/api/chat/save", {
+        const newChatResponse = await axios.post(`${config.API_URL}/api/chat/save`, {
           userId: user._id,
           chatId: null, // Pass null for new chat creation
           message: userMessage.content,
@@ -133,7 +133,7 @@ const Chat = () => {
         console.log("New chat created with ID:", chatIdToSave);
       } else {
         // If it's an existing chat, just update it
-        await axios.post("http://localhost:5000/api/chat/save", {
+        await axios.post(`${config.API_URL}/api/chat/save`, {
           userId: user._id,
           chatId: chatIdToSave,
           message: userMessage.content,
@@ -181,7 +181,7 @@ const Chat = () => {
   // Delete chat function
   const handleDeleteChat = async (chatId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/chat/${user._id}/${chatId}`);
+      await axios.delete(`${config.API_URL}/api/chat/${user._id}/${chatId}`);
       fetchChats();
       loadChat(chatId);
     } catch (error) {
@@ -203,10 +203,29 @@ const Chat = () => {
     };
   }, []);
 
+  // Close sidebar when a chat is selected on mobile
+  const handleChatSelect = (chatId) => {
+    loadChat(chatId);
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  };
+
+  // Start new chat function with sidebar toggle for mobile
+  const handleNewChat = () => {
+    startNewChat();
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   return user ? (
     <Container>
-      <Sidebar>
-        <NewChatButton onClick={startNewChat}>+ New Chat</NewChatButton>
+      <MenuButton onClick={toggleSidebar}>☰</MenuButton>
+      <Overlay isOpen={sidebarOpen} onClick={handleOverlayClick} />
+      
+      <Sidebar isOpen={sidebarOpen}>
+        <NewChatButton onClick={handleNewChat}>+ New Chat</NewChatButton>
         {Object.entries(groupedChats).map(([label, chats]) =>
           chats.length > 0 && chats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) && (
             <div key={label}>
@@ -214,13 +233,22 @@ const Chat = () => {
               {chats.map((chat) => (
                 <SidebarItem 
                   key={chat._id} 
-                  onClick={() => loadChat(chat._id)}
+                  onClick={() => handleChatSelect(chat._id)}
                 >
                   {chat.title}
                   <ThreeDotMenu>
-                    <span onClick={() => setShowDelete(chat._id)}>...</span>
+                    <span onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDelete(chat._id);
+                    }}>...</span>
                     {showDelete === chat._id && (
-                      <DeleteButton ref={deleteButtonRef} onClick={() => handleDeleteChat(chat._id)}>
+                      <DeleteButton 
+                        ref={deleteButtonRef} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteChat(chat._id);
+                        }}
+                      >
                         Delete
                       </DeleteButton>
                     )}
@@ -232,49 +260,59 @@ const Chat = () => {
         )}
       </Sidebar>
 
-      <ChatBox>
-        <MessagesContainer>
-          {messages.map((msg, index) => (
-            <Message key={index} isbot={msg.role === "ai" ? "true" : "false"}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div>{msg.content}</div>
-                {msg.role === "ai" && msg.sources && msg.sources.length > 0 && (
-                  <SourcesContainer>
-                    <SourcesTitle>Sources:</SourcesTitle>
-                    <SourcesList>
-                      {msg.sources.map((source, sourceIndex) => (
-                        <SourceItem key={sourceIndex}>
-                          <span>📚</span>
-                          <span>
-                            {source.file_name} 
-                            {source.page !== 'N/A' ? ` - Page ${source.page}` : ''}
-                          </span>
-                        </SourceItem>
-                      ))}
-                    </SourcesList>
-                  </SourcesContainer>
-                )}
-              </div>
-            </Message>
-          ))}
-          {loading && <CircularProgress size={24} style={{ margin: "10px auto", display: "block" }} />}
-        </MessagesContainer>
+      <ChatContainer>
+        <Title>BhimGPT</Title>
+        <ChatBox>
+          <MessagesContainer>
+            {messages.map((msg, index) => (
+              <Message key={index} isbot={msg.role === "ai" ? "true" : "false"}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div>{msg.content}</div>
+                  {msg.role === "ai" && msg.sources && msg.sources.length > 0 && (
+                    <SourcesContainer>
+                      <SourcesTitle>Sources:</SourcesTitle>
+                      <SourcesList>
+                        {msg.sources.map((source, sourceIndex) => (
+                          <SourceItem key={sourceIndex}>
+                            <span>📚</span>
+                            <a 
+                              href={source.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{color: '#2196f3' }}
+                            >
+                              <span>
+                                {source.file_name} 
+                                {source.page !== 'N/A' ? ` - Page ${source.page}` : ''}
+                              </span>
+                            </a>
+                          </SourceItem>
+                        ))}
+                      </SourcesList>
+                    </SourcesContainer>
+                  )}
+                </div>
+              </Message>
+            ))}
+            {loading && <CircularProgress size={24} style={{ margin: "10px auto", display: "block" }} />}
+          </MessagesContainer>
 
-        <InputContainer>
-          <Input
-            type="text"
-            className="chat-box"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
-            disabled={loading}
-          />
-          <SendButton onClick={handleSendMessage} disabled={loading}>
-            {loading ? "Loading..." : "Send"}
-          </SendButton>
-        </InputContainer>
-      </ChatBox>
+          <InputContainer>
+            <Input
+              type="text"
+              className="chat-box"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type a message..."
+              disabled={loading}
+            />
+            <SendButton onClick={handleSendMessage} disabled={loading}>
+              {loading ? "Loading..." : "Send"}
+            </SendButton>
+          </InputContainer>
+        </ChatBox>
+      </ChatContainer>
     </Container>
   ) : <p>Loading...</p>;
 };

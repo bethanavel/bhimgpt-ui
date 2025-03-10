@@ -1,9 +1,10 @@
 const express = require("express");
 const Chat = require("../models/Chat");
 const mongoose = require("mongoose");
-const { ChatOpenAI } = require('@langchain/openai');
 const axios = require('axios');
 const router = express.Router();
+
+const FLASK_URL = process.env.NODE_ENV === 'production' ? process.env.FLASK_URL : 'https://deaa-103-109-45-113.ngrok-free.app';
 
 const truncateMessage = (message, maxLength) => {
   if (message.length <= maxLength) return message;
@@ -18,20 +19,13 @@ const truncateMessage = (message, maxLength) => {
   return truncated + "...";
 };
 
-// Initialize LLM
-const llm = new ChatOpenAI({
-  modelName: "gpt-4-1106-preview",
-  openAIApiKey: process.env.OPENAI_API_KEY,
-  temperature: 0.7
-});
-
 
 router.post('/chatResponse', async (req, res) => {
   try {
     const { question, chat_history = [] } = req.body;
     if (!question) return res.status(400).json({ error: 'Question is required' });
 
-    const response = await axios.post('https://e372-103-176-188-207.ngrok-free.app/chat', {
+    const response = await axios.post(`${FLASK_URL}/chat`, {
       question,
       chat_history
     });

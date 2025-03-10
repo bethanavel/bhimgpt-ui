@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Container, Form, Input, Button, ErrorMessage } from "./Register.styles";
 import { FooterText } from '../Login/Login.styles'
+import config from '../../config'; // Import config
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -33,7 +34,7 @@ const Register = () => {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", {
+      const res = await axios.post(`${config.API_URL}/api/auth/register`, {
         email,
         password,
       });

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import config from '../../config'; // Import config
 import { Container, Form, Input, Button, SuccessMessage, TickIcon } from "./ResetPassword.styles";
 
 const ResetPassword = () => {
@@ -18,7 +19,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await axios.post(`http://localhost:5000/api/auth/reset-password`, { token, newPassword });
+      const res = await axios.post(`${config.API_URL}/api/auth/reset-password`, { token, newPassword });
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
